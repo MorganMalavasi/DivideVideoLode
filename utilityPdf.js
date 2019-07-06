@@ -60,10 +60,5 @@ async function getTexts (paths) {
     return allText;
 }
 
-function print (elements){
-    for (i in elements)
-        console.log(i + ' ' + elements[i]);
-}
 
-
-module.exports = {getDataPdf, printPages, createPath, getTexts, getSingleTexts, print};
+module.exports = {getDataPdf, printPages, createPath, getTexts, getSingleTexts};
