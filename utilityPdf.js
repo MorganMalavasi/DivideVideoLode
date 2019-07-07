@@ -1,19 +1,21 @@
 const pdf = require('pdf-parse');
 const fs = require('fs'); 
 const PDFImage = require("pdf-image").PDFImage;
-const tesseract = require('tesseract.js');
+const utils = require('./utils.js');
 
     
+// get number of pages in pdf 
 async function getDataPdf(path){
     let databuffer = fs.readFileSync(__dirname + path);
     let number = await pdf(databuffer);
     return number;
 }     
 
+// create elements in the directory
 async function printPages(path, nPages){
     return new Promise((resolve, reject) => {
         let pdfImage = new PDFImage(__dirname + path, {graphicsMagick: true});
-
+        console.log('Creating images for the pdf');
         for (let i=0; i<nPages; i++){
             pdfImage.convertPage(i).then(function (imagePath) {
                 if (i === nPages-1)
@@ -23,6 +25,7 @@ async function printPages(path, nPages){
     });
 }
 
+// get all the path of the images 
 function createPath (n) {
     let paths = [];
     return new Promise((resolve,reject) => {
@@ -34,31 +37,5 @@ function createPath (n) {
     });
 }
 
-function getSingleTexts (path) {
-    return new Promise((resolve, reject) => {
-        const { TesseractWorker } = tesseract;
-        
-        const worker = new TesseractWorker();
-        worker
-        .recognize(path)
-        .progress((p) => {
-            console.log('progress', p);
-        })
-        .then(({ text }) => {
-            worker.terminate();
-            resolve(text);
-        });
-    });
-}
 
-async function getTexts (paths) {
-    let allText = [];
-    for (i in paths){
-        let txt = await getSingleTexts(paths[i]);
-        allText.push(txt);
-    }
-    return allText;
-}
-
-
-module.exports = {getDataPdf, printPages, createPath, getTexts, getSingleTexts};
+module.exports = {getDataPdf, printPages, createPath};

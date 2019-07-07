@@ -16,27 +16,24 @@ app.get('/', (req,res) => {
     (async() => {
         
         // video part 
-        let pathVideoFrames = await utilityVideo.extractFrame(__dirname + '/lezione1_ronchettipdf/lezione1.mp4');
-        utils.print(pathVideoFrames);
-
+        let elementsVideo = await utilityVideo.extractFrame(__dirname + '/lezione1_ronchettipdf/lezione1.mp4');
+        console.log('Start taking video s text');
+        let allTextVideo = await utils.getTexts(elementsVideo[0]);
         
-        /*
-
-        pdf part 
-        let data = await utilityPdf.getDataPdf('/lezione1_ronchettipdf/lezione1.pdf');
-        
+        // pdf part 
+        let data = await utilityPdf.getDataPdf('/lezione1_ronchettipdf/lezione1.pdf');  
         // get array with ocr of all pages 
         await utilityPdf.printPages('/lezione1_ronchettipdf/lezione1.pdf', data.numpages);
         let paths = await utilityPdf.createPath(data.numpages);
-        let allText = await utilityPdf.getTexts(paths);
-        utils.print(allText);
-        */
+        console.log('Start taking photo s text');
+        let allTextPdf = await utils.getTexts(paths);
+        // Creating an algorithm to match the differents slide 
+        // and frames 
 
-
-
+        let times = await utils.matchStrings(allTextVideo, allTextPdf, elementsVideo[1]);
+        utils.printElement(times);
     })();
 
-    
     res.send().status(200);
 });
 

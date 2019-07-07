@@ -3,17 +3,16 @@ const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 const { getVideoDurationInSeconds } = require('get-video-duration');
-const utils = require('./utils.js');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 async function extractFrame (path) {
     let offset = [];
-    let finalList = []
+    let finalPaths = [];
     try {
         let secondVideo = await getVideoDurationInSeconds(path);
         // I create the interval to get 100 frames
-        secondVideoInterval = secondVideo/100;
+        secondVideoInterval = secondVideo/30;
     
         for (let i=0; i<secondVideo; i+=secondVideoInterval){
             if (i!==0 && i<secondVideo){
@@ -29,8 +28,7 @@ async function extractFrame (path) {
         console.log('error in take frames Video');
         console.log(err);
     } finally {
-        utils.print(offset);
-        console.log('printing elements');
+        console.log('creating frames for the video...');
         
         for (let i=0; i<offset.length-1; i++){
             await extractFrames({
@@ -43,13 +41,15 @@ async function extractFrame (path) {
                 if (err) 
                     console.log('ERROR: ' + err);
                 else
-                    finalList.push('./lezione1_ronchettipdf/video_screens/frame' + (i) + '.png');
+                    finalPaths.push(__dirname + '/lezione1_ronchettipdf/video_screens/frame' + (i) + '.png');
             });
         }
 
-        return finalList;
+        // return paths and also times 
+        // [0] -> paths 
+        // [1] -> times in seconds
+        return [finalPaths,offset];
     }
 }
-
 
 module.exports = {extractFrame}

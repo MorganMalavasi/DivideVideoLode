@@ -7,6 +7,14 @@
     <title>Server Lode</title>
 </head>
 <body>
-    <p>ciao</p>
+    <h2>numero frame -> slide</h2>
+
+    <% if (list !== undefined) { %>
+        <% for (let i in list) {%>
+            <p>i</p>
+        <% } %>
+    <% } else { %>
+        <p>List undefined</p>
+    <% }; %>
 </body>
 </html>
