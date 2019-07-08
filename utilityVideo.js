@@ -12,14 +12,14 @@ async function extractFrame (path) {
     try {
         let secondVideo = await getVideoDurationInSeconds(path);
         // I create the interval to get 100 frames
-        secondVideoInterval = secondVideo/30;
+        secondVideoInterval = secondVideo/100;
     
         for (let i=0; i<secondVideo; i+=secondVideoInterval){
             if (i!==0 && i<secondVideo){
                 offset.push(i*1000);
             }
         }
-        var dir = './lezione1_ronchettipdf/video_screens';
+        var dir = './lesson/video_screens';
 
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir);
@@ -33,15 +33,15 @@ async function extractFrame (path) {
         for (let i=0; i<offset.length-1; i++){
             await extractFrames({
                 input: path,
-                output: './lezione1_ronchettipdf/video_screens/frame-%i.png',
+                output: './lesson/video_screens/frame-%i.png',
                 offsets: [offset[i]]
             });
     
-            fs.rename('./lezione1_ronchettipdf/video_screens/frame-1.png', './lezione1_ronchettipdf/video_screens/frame' + i + '.png', function(err) {
+            fs.rename('./lesson/video_screens/frame-1.png', './lesson/video_screens/frame' + i + '.png', function(err) {
                 if (err) 
                     console.log('ERROR: ' + err);
                 else
-                    finalPaths.push(__dirname + '/lezione1_ronchettipdf/video_screens/frame' + (i) + '.png');
+                    finalPaths.push(__dirname + '/lesson/video_screens/frame' + (i) + '.png');
             });
         }
 

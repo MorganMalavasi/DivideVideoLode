@@ -30,7 +30,7 @@ function createPath (n) {
     let paths = [];
     return new Promise((resolve,reject) => {
         for (let i=0; i<n; i++){
-            paths.push(__dirname + '/lezione1_ronchettipdf/lezione1-'+ i +'.png');
+            paths.push(__dirname + '/lesson/lezione1-'+ i +'.png');
             if (i===n-1)
                 resolve(paths);
         }
