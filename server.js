@@ -19,6 +19,7 @@ app.get('/', (req,res) => {
         // delete items in the directories from last recognize
         await clean.deleteItems();
 
+        
         // video part 
         let elementsVideo = await utilityVideo.extractFrame(__dirname + '/lesson/lezione1.mp4');
         console.log('Start taking video s text');
@@ -31,10 +32,15 @@ app.get('/', (req,res) => {
         let paths = await utilityPdf.createPath(data.numpages);
         console.log('Start taking photo s text');
         let allTextPdf = await utils.getTexts(paths);
+
+
+        // delete repetition in pdf - clear the stack of text taken from the pdf
+        let allTextPdfWithRemotions = await utilityPdf.deleteRepetition(allTextPdf);
+        // utils.printElement(allTextPdfWithRemotions);
         // Creating an algorithm to match the differents slide 
         // and frames 
 
-        let times = await utils.matchStrings(allTextVideo, allTextPdf, elementsVideo[1]);
+        let times = await utils.matchStrings(allTextVideo, allTextPdfWithRemotions, elementsVideo[1]);
         utils.printElement(times);
 
     })();

@@ -44,7 +44,7 @@ function matchStrings (stringsFrame, stringsPdf, offset){
         let before = -1;
         for (let i=0; i<stringsFrame.length; i++){
             let match = compareStringTotalArray(stringsFrame[i], stringsPdf);
-            if (match.bestMatchIndex!==before && match.bestMatch.rating>0.5){
+            if (match.bestMatchIndex!==before && match.bestMatch.rating>0.4){
                 times.push(i + 'time:' + offset[i] + ' - slide:' + (match.bestMatchIndex + 1) + ' - match:' + match.bestMatch.rating);         
                 before = match.bestMatchIndex;
             }

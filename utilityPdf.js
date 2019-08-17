@@ -1,6 +1,7 @@
 const pdf = require('pdf-parse');
 const fs = require('fs'); 
 const PDFImage = require("pdf-image").PDFImage;
+const stringSimilarity = require('string-similarity');
 const utils = require('./utils.js');
 
     
@@ -37,5 +38,24 @@ function createPath (n) {
     });
 }
 
+function deleteRepetition (allTextPdf) {
+    return new Promise((resolve, reject) => {
+        let elements = [];
+        for (let i=0; i<allTextPdf.length; i++){
+            if (!(i==allTextPdf.length-1)){
+                let similarity = stringSimilarity.compareTwoStrings(allTextPdf[i], allTextPdf[i+1]);
+                console.log(similarity);
+                if (similarity < 0.8)
+                    elements.push(allTextPdf[i]);
+                else 
+                    elements.push('slide eliminated');
+            } else {
+                elements.push(allTextPdf[i]);
+                resolve(elements);
+            }
+        }
+    });
+}
 
-module.exports = {getDataPdf, printPages, createPath};
+
+module.exports = {getDataPdf, printPages, createPath, deleteRepetition};
