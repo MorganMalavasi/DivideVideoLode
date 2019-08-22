@@ -21,10 +21,12 @@ app.get('/', (req,res) => {
 
         
         // video part 
-        let elementsVideo = await utilityVideo.extractFrame(__dirname + '/lesson/lezione1.mp4');
-        console.log('Start taking video s text');
-        let allTextVideo = await utils.getTexts(elementsVideo[0]);
+        let elementsVideo = await utilityVideo.extractFrameBinary(__dirname + '/lesson/lezione1.mp4');
         
+
+        utils.printElement(elementsVideo);
+
+        /*
         // pdf part 
         let data = await utilityPdf.getDataPdf('/lesson/lezione1.pdf');  
         // get array with ocr of all pages 
@@ -42,6 +44,7 @@ app.get('/', (req,res) => {
 
         let times = await utils.matchStrings(allTextVideo, allTextPdfWithRemotions, elementsVideo[1]);
         utils.printElement(times);
+        */
 
     })();
 
