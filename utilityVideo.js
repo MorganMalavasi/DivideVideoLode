@@ -4,9 +4,11 @@ const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 const utils = require('./utils.js');
 const { getVideoDurationInSeconds } = require('get-video-duration');
+const stringSimilarity = require('string-similarity');
 const tree = require('./tree.js');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
+var elem = 0;
 
 async function extractFrame (path) {
     let offset = [];
@@ -54,69 +56,124 @@ async function extractFrame (path) {
     }
 }
 
+
+
+
+
+
+
+/*
+    EXPLANATION OF THE ALGORITHM 
+
+
+*/
+
+
 async function extractFrameBinary (path) {
-    let offset = [];            // contains seconds foreach frame
-    let finalPaths = [];        // contains path foreach frame
-    let texts = [];             // contains all the texts
-
-    let informations = [];
-    
-
+    let informationsVideo = null;
     try {
-        let secondVideo = await getVideoDurationInSeconds(path);    // duration video in milliseconds 
+        let secondsVideo = await getVideoDurationInSeconds(path);    // duration video in milliseconds 
         var dir = './lesson/video_screens';
 
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir);
         }
 
-
-        /*
-            Explanation 
-            I operate a binary search and i take the frame in the middle (withdraw its text).
-            Once done it, i broke the video in other two segments like in a binary search 
-            and i repeat the operation. If the element is the same took before then I 
-            stop, else i continue dividing the video 
-        */
-
-        let i = 0; // conta frame 
-        // let bst = new tree.Bst();
-        await binarySearch(secondVideo, path, i, informations);
+        informationsVideo = await binarySearchCaller(secondsVideo, path);
         
         
     } catch (err) {
-        console.log('error in take frames Video');
+        console.log('error in getting duration of the video or binary search');
         console.log(err);
     } finally {
-        return informations;
+        return informationsVideo;
     }
 }
 
-async function binarySearch (time, path, i, informations) {
+
+// caller for the recursion function 
+async function binarySearchCaller (secondsVideo, path){
+    
+    
+    let startTime = 0;
+    let endTime = secondsVideo;
+    let startText = null;
+    let endText = null;
+    let out = null;
+    let informations = [];
+    
+    try {
+        out = '/lesson/video_screens/frame-x' + elem + '.png';
+        await extractFrames({
+            input: path,
+            output: './lesson/video_screens/frame-%i.png',
+            offsets: [1000]
+        });
+
+        fs.rename('./lesson/video_screens/frame-1.png', './lesson/video_screens/frame-x' + elem + '.png', function(err) {
+            if (err) 
+                console.log('ERROR renaming file: frame-' + elem + '.png' + ':' + err);
+            elem++;
+        });
+        startText = await utils.getSingleTexts(__dirname + out);
+        informations.push({text_: startText, outpath_: __dirname + out, time_: startTime});
+
+        out = '/lesson/video_screens/frame-x' + elem + '.png';
+        await extractFrames({
+            input: path,
+            output: './lesson/video_screens/frame-%i.png',
+            offsets: [(endTime-1)*1000]
+        });
+
+        fs.rename('./lesson/video_screens/frame-1.png', './lesson/video_screens/frame-x' + elem + '.png', function(err) {
+            if (err) 
+                console.log('ERROR renaming file: frame-' + elem + '.png' + ':' + err);
+            elem++;
+        });
+        endText = await utils.getSingleTexts(__dirname + out);
+        informations.push({text_: endText, outpath_:__dirname + out, time_: endTime});
+        
+    } catch (err) {
+        console.log('ERROR during the first two frames');
+    } finally {
+        // await binarySearch(start, end, path, informations);
+        return informations;
+    }
+
+}
+
+
+
+// recursion part 
+async function binarySearch (startTime, endTime, path, informations) {
     /*
         Poichè non sappiamo il numero di frame che andremo a ricavare non possiamo usare un array
         Una volta che avremo finito di ricavare i nostri elementi andremo allora 
         a leggerli all'interno di un albero attraverso una visita speciale 
     */
-    let out = '/lesson/video_screens/frame-' + i + '.png';
-    let timeDivided = time / 2;
+    let out = '/lesson/video_screens/frame-x' + elem + '.png';
+    let time = (endTime + startTime) / 2;
     try {
         await extractFrames({
             input: path,
             output: './lesson/video_screens/frame-%i.png',
-            offsets: [timeDivided * 1000]
+            offsets: [time * 1000]
         });
 
-        fs.rename('./lesson/video_screens/frame-1.png', './lesson/video_screens/frame-' + i + '.png', function(err) {
+        fs.rename('./lesson/video_screens/frame-1.png', './lesson/video_screens/frame-x' + elem + '.png', function(err) {
             if (err) 
-                console.log('ERROR renaming file: frame-' + i + '.png' + ':' + err);
+                console.log('ERROR renaming file: frame-' + elem + '.png' + ':' + err);
+            elem++;
         });
 
     } catch (err) {
         console.log('Error in taking video frame');
     } finally {
         let text = await utils.getSingleTexts(__dirname + out);
-        informations.push({text_: text, outpath_: out, time_: timeDivided});
+        informations.push({text_: text, outpath_: out, time_: time});
+
+        let similarity = stringSimilarity.compareTwoStrings(lastText, text);
+        
     }
 }
 
