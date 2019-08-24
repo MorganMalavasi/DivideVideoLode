@@ -23,7 +23,6 @@ app.get('/', (req,res) => {
         // video part 
         let elementsVideo = await utilityVideo.extractFrameBinary(__dirname + '/lesson/lezione1.mp4');
         
-
         utils.printElement(elementsVideo);
 
         /*
