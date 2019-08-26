@@ -10,9 +10,8 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 var elem = 0;
 const SIMILARITY_GRADE_LONG = 0.6;
 const SIMILARITY_GRADE_SHORT = 0.3;
-const TIME_EXCEEDED = 20;
-
-
+const TIME_EXCEEDED = 10;
+const SIMILARITY_GRADE_BACK = 0.6;
 
 /*
     ALGORITMO BASE 
@@ -25,7 +24,7 @@ const TIME_EXCEEDED = 20;
 */
 async function extractFrame (path) {
     let offset = [];
-    let finalPaths = [];
+    let finalInf = [];
     try {
         let secondVideo = await getVideoDurationInSeconds(path);
         // I create the interval to get 100 frames
@@ -54,18 +53,18 @@ async function extractFrame (path) {
                 offsets: [offset[i]]
             });
     
-            fs.rename('./lesson/video_screens/frame-1.png', './lesson/video_screens/frame' + i + '.png', function(err) {
+            fs.rename('./lesson/video_screens/frame-1.png', './lesson/video_screens/frame-x' + i + '.png', function(err) {
                 if (err) 
-                    console.log('ERROR: ' + err);
-                else
-                    finalPaths.push(__dirname + '/lesson/video_screens/frame' + (i) + '.png');
+                    console.log('ERROR renaiming: ' + err);
             });
+            let text = await utils.getSingleTexts(__dirname + '/lesson/video_screens/frame-x' + i + '.png');
+            finalInf.push({text_: text, outpath_: __dirname + '/lesson/video_screens/frame-x' + i + '.png', time: offset[i]});
         }
 
         // return paths and also times 
         // [0] -> paths 
         // [1] -> times in seconds
-        return [finalPaths,offset];
+        return finalInf;
     }
 }
 
@@ -255,7 +254,87 @@ function clearArray (arr,size) {
     Inoltre i casi di errore attraverso questa tecnica sono molto rari. 
 */
 
+async function scrollBackEsponential (path) {
+
+    let secondVideo = await getVideoDurationInSeconds(path);
+    let i = 0;
+    let spaceTime = 10;
+    let lastText = null;
+    let times = [];
+    
+    try {
+        let out = '/lesson/video_screens/frame-x' + i + '.png';
+        await extractFrames({
+            input: path,
+            output: './lesson/video_screens/frame-%i.png',
+            offsets: [1000]
+        });
+        fs.rename('./lesson/video_screens/frame-1.png', './lesson/video_screens/frame-x' + i + '.png', function(err) {
+            if (err) 
+                console.log('ERROR renaming file: frame-' + i + '.png' + ':' + err);
+            i++;
+        });
+        lastText = await utils.getSingleTexts(__dirname + out);
+    } catch (err){
+        console.log('Error!');
+    } finally {
+        let lastWhereIam = 0;
+        let whereIam = spaceTime;
+        let esponent = 0;
+        let text = null;
+        let back = false;
+        let counter = 0;
+
+        while (whereIam < Math.round(secondVideo)){
+            await extractFrames({
+                input: path,
+                output: './lesson/video_screens/frame-%i.png',
+                offsets: [whereIam * 1000]
+            });
+            console.log(counter++);
+            text = await utils.getSingleTexts('./lesson/video_screens/frame-1.png');
+            console.log('ultimo testo -> ' + lastText);
+            console.log('testo nuovo -> ' + text);
+            console.log('tempo -> ' + whereIam);
+            
+            if (stringSimilarity.compareTwoStrings(text, lastText)>SIMILARITY_GRADE_BACK){
+                fs.unlink('./lesson/video_screens/frame-1.png', (err) => {
+                    if (err)
+                        console.log('Error deleting element ' + 'frame-1.png');
+                });
+                lastText = text;
+                lastWhereIam = whereIam;
+                whereIam += spaceTime * Math.pow(2,esponent); 
+                esponent++;
+                back = false;
+            } else if (back && stringSimilarity.compareTwoStrings(text, lastText)<=SIMILARITY_GRADE_BACK ){
+                fs.rename('./lesson/video_screens/frame-1.png', './lesson/video_screens/frame-x' + i + '.png', function(err) {
+                    if (err) 
+                        console.log('ERROR renaming file: frame-' + i + '.png' + ':' + err);
+                    times.push({text_: text, outpath_: __dirname + '/lesson/video_screens/frame-x' + i + '.png', time_: lastWhereIam});
+                }); 
+                lastWhereIam = whereIam;
+                whereIam += spaceTime;
+                lastText = text;
+                esponent = 0;
+                back = false;
+                i++;
+            } else {
+                fs.unlink('./lesson/video_screens/frame-1.png', (err) => {
+                    if (err) {
+                        console.log('Error deleting element ' + 'frame-1.png');
+                    } else {
+                        console.log('Element deleted correctly');
+                    }
+                });
+                whereIam = lastWhereIam + spaceTime;
+                esponent = 0;
+                back = true;
+            }
+        }
+    }
+    return times;
+}
 
 
-
-module.exports = {extractFrame, extractFrameBinary}
+module.exports = {extractFrame, extractFrameBinary, scrollBackEsponential}
