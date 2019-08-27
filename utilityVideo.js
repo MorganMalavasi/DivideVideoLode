@@ -10,8 +10,10 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 var elem = 0;
 const SIMILARITY_GRADE_LONG = 0.6;
 const SIMILARITY_GRADE_SHORT = 0.3;
-const TIME_EXCEEDED = 10;
 const SIMILARITY_GRADE_BACK = 0.6;
+const SIMILARITY_GRADE_CLEAN = 0.7;
+const TIME_EXCEEDED = 10;
+
 
 /*
     ALGORITMO BASE 
@@ -99,7 +101,8 @@ async function extractFrameBinary (path) {
         console.log('error in getting duration of the video or binary search');
         console.log(err);
     } finally {
-        return informationsVideo;
+        let cleanInformationsVideo = await cleanInformations(informationsVideo);
+        return cleanInformationsVideo;
     }
 }
 
@@ -241,6 +244,27 @@ function clearArray (arr,size) {
     });
 }
 
+function cleanInformations(informations){
+    return new Promise((resolve,reject) => {
+        let newInformations = [];
+        let i = 1;
+        let actual = informations[0].text_;
+        newInformations.push(informations[0]);
+        while (i<informations.length){
+            if (stringSimilarity.compareTwoStrings(actual, informations[i].text_) > SIMILARITY_GRADE_CLEAN){
+                i++;
+            } else {
+                newInformations.push(informations[i]);
+                actual = informations[i].text_;
+                i++;
+            }
+
+            if (i == informations.length-1)
+                resolve(newInformations);
+        }
+    });
+}
+
 
 
 
@@ -259,7 +283,7 @@ async function scrollBackEsponential (path) {
     let secondVideo = await getVideoDurationInSeconds(path);
     let i = 0;
     let spaceTime = 10;
-    let lastText = null;
+    let lastText = null; 
     let times = [];
     
     try {

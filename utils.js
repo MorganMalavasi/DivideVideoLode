@@ -1,9 +1,23 @@
 const tesseract = require('tesseract.js');
 const stringSimilarity = require('string-similarity');
+const utils = require('./utils.js');
 
 function printElement (elements){
     for (i in elements)
         console.log(elements[i]);
+}
+
+function getTextAndTimes (inf) {
+    return new Promise((resolve, reject) => {
+        let allTextVideo = [];
+        let allTimes = [];
+        for (let i=0; i<inf.length; i++){
+            allTextVideo.push(inf[i].text_);
+            allTimes.push(inf[i].time_);
+            if (i==inf.length-1)
+                resolve([allTextVideo, allTimes]);
+        }
+    });
 }
 
 function getSingleTexts (path) {
@@ -38,21 +52,65 @@ function compareStringTotalArray (str, totStr){
     return stringSimilarity.findBestMatch(str, totStr);;
 }
 
-function matchStrings (stringsFrame, stringsPdf, offset){
-    return new Promise((resolve, reject) => {
-        let times = [];
+async function matchStrings (stringsFrame, stringsPdf, offset){
+    
+    let stringsPdfFirst;
+    let times = [];
+    try {
+        stringsPdfFirst = await getFirstElements(stringsPdf);
+    } catch (err) {
+        console.log(err);
+    } finally {
         let before = -1;
+        
+        console.log(stringsPdf);
+
         for (let i=0; i<stringsFrame.length; i++){
-            let match = compareStringTotalArray(stringsFrame[i], stringsPdf);
+            
+            let match = compareStringTotalArray(stringsFrame[i], stringsPdfFirst);
             if (match.bestMatchIndex!==before && match.bestMatch.rating>0.4){
-                times.push(i + 'time:' + offset[i] + ' - slide:' + (match.bestMatchIndex + 1) + ' - match:' + match.bestMatch.rating);         
+                let valuesSlides = await returnSizeList(stringsPdf, match.bestMatchIndex); 
+                times.push(i + 'time:' + offset[i] + ' - slides: ' + valuesSlides + ' - match:' + match.bestMatch.rating);         
                 before = match.bestMatchIndex;
             }
             
             if (i === stringsFrame.length-1)
-                resolve(times);
+                return times;
         }
-    })
+    }
 }
 
-module.exports = {printElement, getSingleTexts, getTexts, matchStrings}
+function getFirstElements (elements){
+    return new Promise((resolve, reject) =>{
+        let newElements = [];
+        for (let i=0; i<elements.length; i++){
+            let elm = elements[i];
+            
+            newElements.push(elm[0]);
+
+            if (i==elements.length-1)
+                resolve(newElements);
+        }
+    });
+}
+
+function returnSizeList (elements, index){
+    return new Promise((resolve, reject) => {
+
+        let str = '';
+        let start = index+1;
+
+        for (let i=0; i<elements[index].length; i++){
+
+            let r = start.toString() + ' - ';
+            let res = str.concat(r);
+            str = res;
+            start++;
+
+            if (i == ((elements[index].length)-1))
+                resolve(str);
+        }
+    });
+}
+
+module.exports = {printElement, getSingleTexts, getTexts, matchStrings, getTextAndTimes}

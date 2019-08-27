@@ -19,13 +19,14 @@ app.get('/', (req,res) => {
         // delete items in the directories from last recognize
         await clean.deleteItems();
 
-        
+        console.log('Start dividing video');
         // video part 
-        let elementsVideo = await utilityVideo.scrollBackEsponential(__dirname + '/lesson/lezione1.mp4');
+        let videoObjects = await utilityVideo.extractFrameBinary(__dirname + '/lesson/lezione1.mp4');
+        let elementsVideo = await utils.getTextAndTimes(videoObjects);
+        let allTextVideo = elementsVideo[0];
+        let allTimes = elementsVideo[1];
         
-        utils.printElement(elementsVideo);
 
-        /*
         // pdf part 
         let data = await utilityPdf.getDataPdf('/lesson/lezione1.pdf');  
         // get array with ocr of all pages 
@@ -37,13 +38,12 @@ app.get('/', (req,res) => {
 
         // delete repetition in pdf - clear the stack of text taken from the pdf
         let allTextPdfWithRemotions = await utilityPdf.deleteRepetition(allTextPdf);
-        // utils.printElement(allTextPdfWithRemotions);
         // Creating an algorithm to match the differents slide 
         // and frames 
 
-        let times = await utils.matchStrings(allTextVideo, allTextPdfWithRemotions, elementsVideo[1]);
+        let times = await utils.matchStrings(allTextVideo, allTextPdfWithRemotions, allTimes);
         utils.printElement(times);
-        */
+        console.log('finish');
 
     })();
 

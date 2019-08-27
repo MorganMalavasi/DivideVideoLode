@@ -4,6 +4,7 @@ const PDFImage = require("pdf-image").PDFImage;
 const stringSimilarity = require('string-similarity');
 const utils = require('./utils.js');
 
+const SIMILARITY_GRADE = 0.75;
     
 // get number of pages in pdf 
 async function getDataPdf(path){
@@ -40,7 +41,11 @@ function createPath (n) {
 
 function deleteRepetition (allTextPdf) {
     return new Promise((resolve, reject) => {
-        let elements = [];
+        let elements = new Array(allTextPdf.length);
+        for (let c=0; c<allTextPdf.length; c++){
+            elements[c] = new Array();
+        }
+        /*
         for (let i=0; i<allTextPdf.length; i++){
             if (!(i==allTextPdf.length-1)){
                 let similarity = stringSimilarity.compareTwoStrings(allTextPdf[i], allTextPdf[i+1]);
@@ -53,6 +58,27 @@ function deleteRepetition (allTextPdf) {
                 elements.push(allTextPdf[i]);
                 resolve(elements);
             }
+        }
+        */
+        elements[0].push(allTextPdf[0]);
+        let actual = allTextPdf[0];
+        let i = 1;
+        let index = 0;
+
+        while (i<allTextPdf.length){
+            if (stringSimilarity.compareTwoStrings(actual, allTextPdf[i])>SIMILARITY_GRADE){
+                elements[index].push(allTextPdf[i]);
+                elements[i].push('Slide eliminated');
+                i++;
+            } else {
+                index = i;
+                elements[index].push(allTextPdf[i]);
+                actual = allTextPdf[i];
+                i++;
+            }
+
+            if (i == allTextPdf.length-1)
+                resolve(elements);
         }
     });
 }
